@@ -1,0 +1,22 @@
+{
+    "active_medicines": [
+        {
+            "name": "Ibuprofen",
+            "dosage": "Not specified",
+            "frequency": "Not specified",
+            "justification": "The patient is recommended to switch to Ibuprofen from Tylenol."
+        },
+        {
+            "name": "Trenbolone",
+            "dosage": "Not specified",
+            "frequency": "twice daily",
+            "justification": "The patient is recommended to take Trenbolone twice daily."
+        }
+    ],
+    "discontinued_medicines": [
+        {
+            "name": "Tylenol",
+            "justification": "The patient is recommended to stop using Tylenol and switch to Ibuprofen."
+        }
+    ]
+}

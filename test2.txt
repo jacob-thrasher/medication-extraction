@@ -1,0 +1,18 @@
+
+
+{
+    "justification": [
+        {
+            "medication_name": "Ibuprofen",
+            "reason": "Listed under 'active_medications' indicating the patient is currently taking this medication. However, dosage and frequency specifics were 'Not specified.'"
+        },
+        {
+            "medication_name": "trenbolone",
+            "reason": "Included in 'active_medications' with a specified dosage of 'twice daily', which shows current usage, although frequency detail is 'Not specified.'"
+        },
+        {
+            "medication_name": "Tylenol",
+            "reason": "Categorized under 'discontinued_medications' and reason provided is 'Switched to Ibuprofen', indicating it is no longer being taken by the patient."
+        }
+    ]
+}
