@@ -1,22 +1,19 @@
+
 {
-    "active_medicines": [
-        {
-            "name": "Ibuprofen",
-            "dosage": "Not specified",
-            "frequency": "Not specified",
-            "justification": "The patient is recommended to switch to Ibuprofen from Tylenol."
-        },
-        {
-            "name": "Trenbolone",
-            "dosage": "Not specified",
-            "frequency": "twice daily",
-            "justification": "The patient is recommended to take Trenbolone twice daily."
-        }
-    ],
-    "discontinued_medicines": [
-        {
-            "name": "Tylenol",
-            "justification": "The patient is recommended to stop using Tylenol and switch to Ibuprofen."
-        }
-    ]
+  "active_medications": [
+    {
+      "medication_name": "Dobutamine",
+      "reason": "Dobutamine was being used to manage her hemodynamic instability."
+    },
+    {
+      "medication_name": "Nipride",
+      "reason": "Nipride was likely administered for hemodynamic support alongside dobutamine."
+    }
+  ],
+  "discontinued_medications": [
+    {
+      "medication_name": "Esmolol",
+      "reason": "Esmolol was initiated as a trial but quickly discontinued due to worsening respiratory status."
+    }
+  ]
 }
