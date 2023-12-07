@@ -1,18 +1,36 @@
+    out_prompt = '''
+        Based on the evidence provided, verify the accuracy of each choice. Remove or reclassify any incorrect medications.
+        Create a new bulleted list in the following format, where the status is a single word, "active", "discontinued", or "neither". 
+        Do not include evidence in this list
 
+        - Medication_1 (status)
+        - Medication_2 (status)
+        - Medication_3 (status)
 
-{
-    "justification": [
-        {
-            "medication_name": "Ibuprofen",
-            "reason": "Listed under 'active_medications' indicating the patient is currently taking this medication. However, dosage and frequency specifics were 'Not specified.'"
-        },
-        {
-            "medication_name": "trenbolone",
-            "reason": "Included in 'active_medications' with a specified dosage of 'twice daily', which shows current usage, although frequency detail is 'Not specified.'"
-        },
-        {
-            "medication_name": "Tylenol",
-            "reason": "Categorized under 'discontinued_medications' and reason provided is 'Switched to Ibuprofen', indicating it is no longer being taken by the patient."
-        }
-    ]
-}
+        We will refer to this as "LIST B"
+
+        Return the output in the following format
+
+        "LIST A"
+        
+        "LIST B"
+    '''
+
+    out_prompt = '''
+        Verify the accuracy of each choice by considering information from the original snippit that is outside the scope of the evidence provided. 
+        Remove or reclassify any incorrect medications.
+        Create a new bulleted list in the following format, where the status is a single word, "active", "discontinued", or "neither". 
+        Do not include evidence in this list
+
+        - Medication_1 (status)
+        - Medication_2 (status)
+        - Medication_3 (status)
+
+        We will refer to this as "LIST B"
+
+        Return the output in the following format
+
+        LIST A
+        
+        LIST B
+    '''

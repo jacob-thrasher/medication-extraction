@@ -1,19 +1,27 @@
+LIST A
 
-{
-  "active_medications": [
-    {
-      "medication_name": "Dobutamine",
-      "reason": "Dobutamine was being used to manage her hemodynamic instability."
-    },
-    {
-      "medication_name": "Nipride",
-      "reason": "Nipride was likely administered for hemodynamic support alongside dobutamine."
-    }
-  ],
-  "discontinued_medications": [
-    {
-      "medication_name": "Esmolol",
-      "reason": "Esmolol was initiated as a trial but quickly discontinued due to worsening respiratory status."
-    }
-  ]
-}
+- Lovenox (active): "increase Lovenox to 100 mg subcu b.i.d."
+- Lovenox (discontinued): "Discontinue Lovenox 24 hours prior to next surgery"
+- Aspirin (discontinued): "Will hold aspirin...until after next scheduled surgery"
+- Coumadin (discontinued): "Will hold...Coumadin until after next scheduled surgery"
+- Lopressor (neither): "Hold Lopressor, Lasix, spironolactone for SBP less than 110"
+- Lasix (neither): "Hold Lopressor, Lasix, spironolactone for SBP less than 110"
+- Spironolactone (neither): "Hold Lopressor, Lasix, spironolactone for SBP less than 110"
+- Metoprolol (neither): "Hold metoprolol for pulse less than 55"
+- Glyburide (neither): "Hold glyburide for blood sugar less than 100"
+- Normal saline (active): "Change IV fluid to normal saline plus 20 KCl at 125 ml per hour"
+- KCl (active): "Change IV fluid to normal saline plus 20 KCl at 125 ml per hour"
+
+LIST B
+
+- Lovenox (active)
+- Lovenox (discontinued)
+- Aspirin (discontinued)
+- Coumadin (discontinued)
+- Lopressor (neither)
+- Lasix (neither)
+- Spironolactone (neither)
+- Metoprolol (neither)
+- Glyburide (neither)
+- Normal saline (active)
+- KCl (active)

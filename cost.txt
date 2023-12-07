@@ -1,5 +1,20 @@
-Experiment one (single, 20 samples):
---> $0.13
+Experiment one (No self-feedback)
+Cost: $0.29
 
-Experiement two (single, 80 samples):
---> $0.51
+Experment two (self-feedback)
+Cost: $0.80
+
+Experiment three (New prompt)
+Cost: $0.82
+
+Experiment four (Self-feedback 3.5)
+Cost: $0.83
+
+Experiment five (Single 3.5)
+Cost: $0.29
+
+Experiment six (Self-feedback no evidence 3.5)
+Cost $0.41
+
+Experiment seven (self-feedback no_evidence 4)
+Cost $0.41
