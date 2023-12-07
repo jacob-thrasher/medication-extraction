@@ -109,30 +109,30 @@ def n_shot_verification(client, note, n_shots, model='gpt-4-1106-preview'):
     completion_tokens += int(response.usage.completion_tokens)
 
     # Prune
-    prune_prompt = f'''Remove each element in the bulleted list which is not clearly a specific medication name.
-        Examples of elements which are not medication names are symptoms or procedures, such as "Infection", "Fever", "Biopsy", "Protocol", "Accu-Cheks", "I.V. Fluids", "Inhaler", or "Hypertension".
-        The output should be returned in the same form as the bulleted list with not extra text
+    # prune_prompt = f'''Remove each element in the bulleted list which is not clearly a specific medication name.
+    #     Examples of elements which are not medication names are symptoms or procedures, such as "Infection", "Fever", "Biopsy", "Protocol", "Accu-Cheks", "I.V. Fluids", "Inhaler", or "Hypertension".
+    #     The output should be returned in the same form as the bulleted list with not extra text
 
-        Bulleted list:
-        {revise_text}
-        '''
-    response = client.chat.completions.create(
-        model=model,
-        messages=[
-            {'role': 'system', 'content': 'You are a medical information extraction assistant. Your job is to extract the status of medicine from clinical snippits'},
-            {'role': 'user', 'content': prune_prompt},
-        ]
-    )
-    prune_text = response.choices[0].message.content
-    prompt_tokens += int(response.usage.prompt_tokens)
-    completion_tokens += int(response.usage.completion_tokens)
+    #     Bulleted list:
+    #     {revise_text}
+    #     '''
+    # response = client.chat.completions.create(
+    #     model=model,
+    #     messages=[
+    #         {'role': 'system', 'content': 'You are a medical information extraction assistant. Your job is to extract the status of medicine from clinical snippits'},
+    #         {'role': 'user', 'content': prune_prompt},
+    #     ]
+    # )
+    # prune_text = response.choices[0].message.content
+    # prompt_tokens += int(response.usage.prompt_tokens)
+    # completion_tokens += int(response.usage.completion_tokens)
 
     all_outputs = {
         'extraction': extraction_text,
         'omission': omission_text,
         'evidence': evidence_text,
         'revise': revise_text,
-        'prune': prune_text
+        # 'prune': prune_text
     }
     return all_outputs, prompt_tokens, completion_tokens
 
@@ -172,7 +172,7 @@ def zero_shot_self_feedback(client, note, model='gpt-4-1106-preview'):
 
     return content, prompt_tokens, completion_tokens
 
-def run_experiment(csvpath, outpath, num_trials, experiment='single', model='gpt-4-1106-preview', n_shot=1):
+def run_experiment(csvpath, outpath, num_trials, experiment='single', model='', n_shot=1):
     assert experiment in ['single', 'feedback', 'SV'], f'type must be in [single, feedback], got {experiment}'
 
     with open('key.json', 'r') as f:
@@ -197,7 +197,7 @@ def run_experiment(csvpath, outpath, num_trials, experiment='single', model='gpt
         elif experiment == 'feedback':
             response, p_tokens, c_tokens = zero_shot_self_feedback(client, snippet, model=model)
         elif experiment == 'SV':
-            response, p_tokens, c_tokens = n_shot_verification(client, snippet, n_shot)
+            response, p_tokens, c_tokens = n_shot_verification(client, snippet, n_shot, model=model)
 
         print(f'Trial {i}/{num_trials}:')
         print(f'---> Input tokens used : {p_tokens}')
@@ -209,7 +209,7 @@ def run_experiment(csvpath, outpath, num_trials, experiment='single', model='gpt
         if experiment in ['single', 'feedback']:
             df.loc[df['index']==index, 'response'] = response 
         else:
-            df.loc[df['index']==index, 'response'] = response['prune']
+            df.loc[df['index']==index, 'response'] = response['revise']
             df.loc[df['index']==index, 'all_outputs'] = str(response)
     
         df.to_csv(outpath)
@@ -219,12 +219,13 @@ def run_experiment(csvpath, outpath, num_trials, experiment='single', model='gpt
 #  model='gpt-3.5-turbo-1106'
 
 
-root = 'D:\\Big_Data\\CASI'
+root = 'C:\\Users\\jthra\\Documents\\data\\CASI'
 experiment = 'SV'
-filename = 'SV/3 shot/all.csv'
-prompt_tokens, completion_tokens = run_experiment(os.path.join(root, filename), 
+filename = 'SV/1 shot/no_prune.csv'
+prompt_tokens, completion_tokens = run_experiment(os.path.join(root, 'medication_status_test.csv'), 
                                                   os.path.join(root, filename), 25, 
-                                                  experiment=experiment, n_shot=3)
+                                                  experiment=experiment, n_shot=1,
+                                                  model='gpt-3.5-turbo-1106')
 
 input_fee = 0.01  # per 1k tokens
 output_fee = 0.03 # per 1k tokens

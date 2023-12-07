@@ -20,14 +20,28 @@ Experiment seven (self-feedback no_evidence 4)
 Cost $0.41
 
 
+GPT 4
+0-shot
+All: $0.44623
+No prune: $0.39592000000000005
+NO omission: $0.31206
 
-SV
 1-shot
 All: $0.78
 No prune: 0.69502
 No omission:  $0.4265
 
-
 3-shot
+All: $0.58637
 No-omission: $0.61429
 No prune: $0.8278900000000001
+
+
+GPT 3.5
+0-shot
+No omission: $0.31993
+No Prune: $0.39966
+All: $0.45404
+
+1-shot
+All: $0.7828299999999999
