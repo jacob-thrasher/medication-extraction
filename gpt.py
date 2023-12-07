@@ -6,6 +6,11 @@ import ast
 from utils import *
 from sklearn.metrics import f1_score
 
+from extraction import Extraction
+from omission import Omission
+from evidence import Evidence
+from prune import Prune
+
 def single_call(client, note, model='gpt-4-1106-preview'):
     prompt = f'''
         Return a bulleted list of all medications mentioned in the clinical snippit below. Include the medication status as a single word: "active", "discontinued", or "neither". Use the following format:
@@ -32,10 +37,107 @@ def single_call(client, note, model='gpt-4-1106-preview'):
 
     return content, prompt_tokens, completion_tokens
 
+def n_shot_verification(client, note, n_shots, model='gpt-4-1106-preview'):
+    prompt_tokens = 0
+    completion_tokens = 0
+
+    # Initial extraction
+    extraction_prompt = Extraction().build_prompt(n_shots, note)
+    response = client.chat.completions.create(
+        model=model,
+        messages=[
+            {'role': 'system', 'content': 'You are a medical information extraction assistant. Your job is to extract the status of medicine from clinical snippits'},
+            {'role': 'user', 'content': extraction_prompt},
+        ]
+    )
+    extraction_text = response.choices[0].message.content
+    prompt_tokens += int(response.usage.prompt_tokens)
+    completion_tokens += int(response.usage.completion_tokens)
+
+    # Omission
+    omission_prompt = Omission().build_prompt(n_shots, note, extraction_text)
+    response = client.chat.completions.create(
+        model=model,
+        messages=[
+            {'role': 'system', 'content': 'You are a medical information extraction assistant. Your job is to extract the status of medicine from clinical snippits'},
+            {'role': 'user', 'content': omission_prompt},
+        ]
+    )
+    omission_text = response.choices[0].message.content
+    prompt_tokens += int(response.usage.prompt_tokens)
+    completion_tokens += int(response.usage.completion_tokens)
+
+    # Evidence
+    evidence_prompt = Evidence().build_prompt(n_shots, note, omission_text)
+    response = client.chat.completions.create(
+        model=model,
+        messages=[
+            {'role': 'system', 'content': 'You are a medical information extraction assistant. Your job is to extract the status of medicine from clinical snippits'},
+            {'role': 'user', 'content': evidence_prompt},
+        ]
+    )
+    evidence_text = response.choices[0].message.content
+    prompt_tokens += int(response.usage.prompt_tokens)
+    completion_tokens += int(response.usage.completion_tokens)
+
+    # Revise
+    revise_prompt = f"""Revise the status of each medication, based on the patient note and the extracted evidence snippet. 
+                    The status should be active, discontinued, or neither. If the evidence does not show that status is clearly active or discontinued, revise it to neither.
+                    The output should be returned in the following format with no other text:
+                    
+                    - Medication_1 (status)
+                    - Medication_2 (status)
+                    - Medication_3 (status)
+
+                    Patient Note:
+                    ------------
+                    {note}
+
+                    Extracted Medications
+                    ------------
+                    {evidence_text}
+                    """
+    response = client.chat.completions.create(
+        model=model,
+        messages=[
+            {'role': 'system', 'content': 'You are a medical information extraction assistant. Your job is to extract the status of medicine from clinical snippits'},
+            {'role': 'user', 'content': revise_prompt},
+        ]
+    )
+    revise_text = response.choices[0].message.content
+    prompt_tokens += int(response.usage.prompt_tokens)
+    completion_tokens += int(response.usage.completion_tokens)
+
+    # Prune
+    prune_prompt = f'''Remove each element in the bulleted list which is not clearly a specific medication name.
+        Examples of elements which are not medication names are symptoms or procedures, such as "Infection", "Fever", "Biopsy", "Protocol", "Accu-Cheks", "I.V. Fluids", "Inhaler", or "Hypertension".
+        The output should be returned in the same form as the bulleted list with not extra text
+
+        Bulleted list:
+        {revise_text}
+        '''
+    response = client.chat.completions.create(
+        model=model,
+        messages=[
+            {'role': 'system', 'content': 'You are a medical information extraction assistant. Your job is to extract the status of medicine from clinical snippits'},
+            {'role': 'user', 'content': prune_prompt},
+        ]
+    )
+    prune_text = response.choices[0].message.content
+    prompt_tokens += int(response.usage.prompt_tokens)
+    completion_tokens += int(response.usage.completion_tokens)
+
+    all_outputs = {
+        'extraction': extraction_text,
+        'omission': omission_text,
+        'evidence': evidence_text,
+        'revise': revise_text,
+        'prune': prune_text
+    }
+    return all_outputs, prompt_tokens, completion_tokens
 
 
-
-def self_feedback(client, note, model='gpt-4-1106-preview'):
+def zero_shot_self_feedback(client, note, model='gpt-4-1106-preview'):
     in_prompt = f'''
         Create a bulleted list of all medications mentioned in the clinical snippit below. Include the medication status as a single word: "active", "discontinued", or "neither".
         Provide evidence for each choice.
@@ -70,8 +172,8 @@ def self_feedback(client, note, model='gpt-4-1106-preview'):
 
     return content, prompt_tokens, completion_tokens
 
-def run_experiment(csvpath, outpath, num_trials, experiment='single', model='gpt-4-1106-preview'):
-    assert experiment in ['single', 'feedback'], f'type must be in [single, feedback], got {experiment}'
+def run_experiment(csvpath, outpath, num_trials, experiment='single', model='gpt-4-1106-preview', n_shot=1):
+    assert experiment in ['single', 'feedback', 'SV'], f'type must be in [single, feedback], got {experiment}'
 
     with open('key.json', 'r') as f:
         key = json.load(f)['OPENAI_API_KEY']
@@ -93,7 +195,9 @@ def run_experiment(csvpath, outpath, num_trials, experiment='single', model='gpt
         if experiment == 'single': 
             response, p_tokens, c_tokens = single_call(client, snippet, model=model)
         elif experiment == 'feedback':
-            response, p_tokens, c_tokens = self_feedback(client, snippet, model=model)
+            response, p_tokens, c_tokens = zero_shot_self_feedback(client, snippet, model=model)
+        elif experiment == 'SV':
+            response, p_tokens, c_tokens = n_shot_verification(client, snippet, n_shot)
 
         print(f'Trial {i}/{num_trials}:')
         print(f'---> Input tokens used : {p_tokens}')
@@ -102,7 +206,11 @@ def run_experiment(csvpath, outpath, num_trials, experiment='single', model='gpt
         prompt_tokens += p_tokens
         completion_tokens += c_tokens
 
-        df.loc[df['index']==index, 'response'] = response 
+        if experiment in ['single', 'feedback']:
+            df.loc[df['index']==index, 'response'] = response 
+        else:
+            df.loc[df['index']==index, 'response'] = response['prune']
+            df.loc[df['index']==index, 'all_outputs'] = str(response)
     
         df.to_csv(outpath)
     return prompt_tokens, completion_tokens
@@ -110,24 +218,26 @@ def run_experiment(csvpath, outpath, num_trials, experiment='single', model='gpt
 
 #  model='gpt-3.5-turbo-1106'
 
-root = 'C:\\Users\\jthra\\Documents\\data\\CASI'
-# experiment = 'feedback'
-# prompt_tokens, completion_tokens = run_experiment(os.path.join(root, 'medication_status_test.csv'), 
-#                                                   os.path.join(root, f'4/4_responses_{experiment}.csv'), -1, 
-#                                                   experiment=experiment)
 
-# input_fee = 0.01  # per 1k tokens
-# output_fee = 0.03 # per 1k tokens
+root = 'D:\\Big_Data\\CASI'
+experiment = 'SV'
+filename = 'SV/3 shot/all.csv'
+prompt_tokens, completion_tokens = run_experiment(os.path.join(root, filename), 
+                                                  os.path.join(root, filename), 25, 
+                                                  experiment=experiment, n_shot=3)
 
-# input_cost = (prompt_tokens / 1000) * input_fee
-# output_cost = (completion_tokens / 1000) * output_fee
-# total_cost = (input_cost + output_cost)
+input_fee = 0.01  # per 1k tokens
+output_fee = 0.03 # per 1k tokens
 
-# print(f'Input tokens used: {prompt_tokens}')
-# print(f'Output tokens used: {completion_tokens}')
-# print(f'Total fee: ${total_cost}')
+input_cost = (prompt_tokens / 1000) * input_fee
+output_cost = (completion_tokens / 1000) * output_fee
+total_cost = (input_cost + output_cost)
 
-f1 = score(os.path.join(root, '4/4_responses_feedback.csv'), experiment='single')
+print(f'Input tokens used: {prompt_tokens}')
+print(f'Output tokens used: {completion_tokens}')
+print(f'Total fee: ${total_cost}')
+
+f1 = score(os.path.join(root, filename), experiment='single')
 
 
 # df = pd.read_csv(os.path.join(root, 'responses_feedback.csv'))

@@ -18,3 +18,16 @@ Cost $0.41
 
 Experiment seven (self-feedback no_evidence 4)
 Cost $0.41
+
+
+
+SV
+1-shot
+All: $0.78
+No prune: 0.69502
+No omission:  $0.4265
+
+
+3-shot
+No-omission: $0.61429
+No prune: $0.8278900000000001
