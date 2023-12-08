@@ -37,7 +37,8 @@ def single_call(client, note, model='gpt-4-1106-preview'):
 
     return content, prompt_tokens, completion_tokens
 
-def n_shot_verification(client, note, n_shots, model='gpt-4-1106-preview'):
+def n_shot_verification(client, note, n_shots, model=''):
+    print(f"Using {model} model")
     prompt_tokens = 0
     completion_tokens = 0
 
@@ -109,30 +110,30 @@ def n_shot_verification(client, note, n_shots, model='gpt-4-1106-preview'):
     completion_tokens += int(response.usage.completion_tokens)
 
     # Prune
-    # prune_prompt = f'''Remove each element in the bulleted list which is not clearly a specific medication name.
-    #     Examples of elements which are not medication names are symptoms or procedures, such as "Infection", "Fever", "Biopsy", "Protocol", "Accu-Cheks", "I.V. Fluids", "Inhaler", or "Hypertension".
-    #     The output should be returned in the same form as the bulleted list with not extra text
+    prune_prompt = f'''Remove each element in the bulleted list which is not clearly a specific medication name.
+        Examples of elements which are not medication names are symptoms or procedures, such as "Infection", "Fever", "Biopsy", "Protocol", "Accu-Cheks", "I.V. Fluids", "Inhaler", or "Hypertension".
+        The output should be returned in the same form as the bulleted list with not extra text
 
-    #     Bulleted list:
-    #     {revise_text}
-    #     '''
-    # response = client.chat.completions.create(
-    #     model=model,
-    #     messages=[
-    #         {'role': 'system', 'content': 'You are a medical information extraction assistant. Your job is to extract the status of medicine from clinical snippits'},
-    #         {'role': 'user', 'content': prune_prompt},
-    #     ]
-    # )
-    # prune_text = response.choices[0].message.content
-    # prompt_tokens += int(response.usage.prompt_tokens)
-    # completion_tokens += int(response.usage.completion_tokens)
+        Bulleted list:
+        {revise_text}
+        '''
+    response = client.chat.completions.create(
+        model=model,
+        messages=[
+            {'role': 'system', 'content': 'You are a medical information extraction assistant. Your job is to extract the status of medicine from clinical snippits'},
+            {'role': 'user', 'content': prune_prompt},
+        ]
+    )
+    prune_text = response.choices[0].message.content
+    prompt_tokens += int(response.usage.prompt_tokens)
+    completion_tokens += int(response.usage.completion_tokens)
 
     all_outputs = {
         'extraction': extraction_text,
         'omission': omission_text,
         'evidence': evidence_text,
         'revise': revise_text,
-        # 'prune': prune_text
+        'prune': prune_text
     }
     return all_outputs, prompt_tokens, completion_tokens
 
@@ -209,7 +210,7 @@ def run_experiment(csvpath, outpath, num_trials, experiment='single', model='', 
         if experiment in ['single', 'feedback']:
             df.loc[df['index']==index, 'response'] = response 
         else:
-            df.loc[df['index']==index, 'response'] = response['revise']
+            df.loc[df['index']==index, 'response'] = response['prune']
             df.loc[df['index']==index, 'all_outputs'] = str(response)
     
         df.to_csv(outpath)
@@ -219,16 +220,16 @@ def run_experiment(csvpath, outpath, num_trials, experiment='single', model='', 
 #  model='gpt-3.5-turbo-1106'
 
 
-root = 'C:\\Users\\jthra\\Documents\\data\\CASI'
+root = 'D:\\Big_Data\\CASI'
 experiment = 'SV'
-filename = 'SV/1 shot/no_prune.csv'
-prompt_tokens, completion_tokens = run_experiment(os.path.join(root, 'medication_status_test.csv'), 
+filename = 'SV/all_2.csv'
+prompt_tokens, completion_tokens = run_experiment(os.path.join(root, filename), 
                                                   os.path.join(root, filename), 25, 
                                                   experiment=experiment, n_shot=1,
-                                                  model='gpt-3.5-turbo-1106')
+                                                  model='gpt-4-1106-preview')
 
-input_fee = 0.01  # per 1k tokens
-output_fee = 0.03 # per 1k tokens
+input_fee = 0.001  # per 1k tokens
+output_fee = 0.002 # per 1k tokens
 
 input_cost = (prompt_tokens / 1000) * input_fee
 output_cost = (completion_tokens / 1000) * output_fee
@@ -238,7 +239,12 @@ print(f'Input tokens used: {prompt_tokens}')
 print(f'Output tokens used: {completion_tokens}')
 print(f'Total fee: ${total_cost}')
 
-f1 = score(os.path.join(root, filename), experiment='single')
+score(os.path.join(root, filename), experiment='single')
+
+# root = 'D:\\Big_Data\\CASI\\SV\\gpt35\\3 shot'
+# f1 = score(os.path.join(root, 'all.csv'), experiment='single')
+# f1 = score(os.path.join(root, 'no_prune.csv'), experiment='single')
+# f1 = score(os.path.join(root, 'no_omission.csv'), experiment='single')
 
 
 # df = pd.read_csv(os.path.join(root, 'responses_feedback.csv'))

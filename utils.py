@@ -21,8 +21,8 @@ def score(csvpath, experiment='single'):
         precision += p
         recall += r
 
-    print('Precision:', precision / len(df))
-    print('Recall:', recall / len(df))
+    # print('Precision:', precision / len(df))
+    # print('Recall:', recall / len(df))
     print('F1:', f1 / len(df))
 
 # TODO: Improve calculation

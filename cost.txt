@@ -39,9 +39,16 @@ No prune: $0.8278900000000001
 
 GPT 3.5
 0-shot
-No omission: $0.31993
-No Prune: $0.39966
-All: $0.45404
+No omission: $0.026140999999999998
+No Prune: $0.033566
+All: $0.037346
 
 1-shot
-All: $0.7828299999999999
+No omission: $0.038471
+No prune: $0.056624
+All: $0.061551
+
+3-shot
+No omission: $0.06114
+No prune: $0.088491
+All: $0.09155999999999999
